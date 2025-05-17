@@ -1,0 +1,28 @@
+{
+  "name": "humos-agi",
+  "version": "1.0.0",
+  "description": "Health care data platform that uses MCP servers from systems like EPIC and exposes MCP servers for others",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest"
+  },
+  "keywords": [
+    "healthcare",
+    "fhir",
+    "mcp",
+    "epic"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.2",
+    "dotenv": "^16.3.1",
+    "fhirclient": "^2.5.5",
+    "jsonwebtoken": "^9.0.2",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

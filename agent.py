@@ -1,3 +1,4 @@
+import mailbox
 from uagents import Agent
 from uagents_adapter import MCPServerAdapter
 from server import mcp
@@ -11,7 +12,7 @@ mcp_adapter = MCPServerAdapter(
 )
 
 # Create a uAgent
-agent = Agent()
+agent = Agent(name="personalized_health_agent", port=8002, mailbox=True)
 
 # Include protocols from the adapter
 for protocol in mcp_adapter.protocols:

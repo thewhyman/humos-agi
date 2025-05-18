@@ -1,209 +1,235 @@
 #!/usr/bin/env python3
 """
 FHIR Interactive Client
-This client directly connects to a FHIR server to fetch patient data based on user input.
+This client uses the FastMCP server to fetch patient data based on user input.
 """
 
 import asyncio
 import os
 import json
-from server import make_fhir_request, format_patient
+from server import mcp
 
 class FHIRClient:
     def __init__(self):
-        self.fhir_server = os.environ.get("FHIR_MCP_SERVER_URL", "https://hapi.fhir.org/baseR4")
-        print(f"Using FHIR server: {self.fhir_server}")
+        print("Using FastMCP FHIR server")
     
     async def search_patients(self, name):
         """Search for patients by name"""
-        url = f"{self.fhir_server}/Patient?name={name}&_count=5"
-        result = await make_fhir_request(url)
-        
-        if not result or not result.get("entry"):
-            return "No patients found matching your search criteria."
-        
-        patient_list = []
-        for entry in result["entry"]:
-            if "resource" in entry:
-                patient = entry["resource"]
-                patient_id = patient.get("id", "Unknown")
-                patient_summary = format_patient(patient)
-                patient_list.append(f"Patient ID: {patient_id}\n{patient_summary}")
-        
-        return "\n\n======\n\n".join(patient_list)
+        # Use the actual function from server.py - it's called search_patients
+        try:
+            # Check if the function exists
+            if hasattr(mcp, 'search_patients'):
+                return await mcp.search_patients(name=name)
+            else:
+                # Fall back to a simulated search using the standard FHIR server
+                print(f"Function 'search_patients' not found in MCP server, using direct FHIR request instead")
+                fhir_server = os.environ.get("FHIR_MCP_SERVER_URL", "https://hapi.fhir.org/baseR4")
+                from server import make_fhir_request, format_patient
+                
+                url = f"{fhir_server}/Patient?name={name}&_count=5"
+                result = await make_fhir_request(url)
+                
+                if not result or not result.get("entry"):
+                    return "No patients found matching your search criteria."
+                
+                patient_list = []
+                for entry in result["entry"]:
+                    if "resource" in entry:
+                        patient = entry["resource"]
+                        patient_id = patient.get("id", "Unknown")
+                        patient_summary = format_patient(patient)
+                        patient_list.append(f"Patient ID: {patient_id}\n{patient_summary}")
+                
+                return "\n\n======\n\n".join(patient_list)
+        except Exception as e:
+            return f"Error searching for patients: {str(e)}"
     
     async def get_patient(self, patient_id):
         """Get detailed information for a specific patient"""
-        url = f"{self.fhir_server}/Patient/{patient_id}"
-        data = await make_fhir_request(url)
-        
-        if not data:
-            return "Unable to fetch patient information."
-        
-        return format_patient(data)
+        try:
+            return await mcp.get_patient(patient_id=patient_id)
+        except Exception as e:
+            print(f"Error with MCP server: {e}, falling back to direct FHIR request")
+            fhir_server = os.environ.get("FHIR_MCP_SERVER_URL", "https://hapi.fhir.org/baseR4")
+            from server import make_fhir_request, format_patient
+            
+            url = f"{fhir_server}/Patient/{patient_id}"
+            data = await make_fhir_request(url)
+            
+            if not data:
+                return "Unable to fetch patient information."
+            
+            return format_patient(data)
     
     async def get_observations(self, patient_id):
         """Get medical observations for a patient"""
-        url = f"{self.fhir_server}/Observation?patient={patient_id}&_count=15&_sort=-date"
-        data = await make_fhir_request(url)
-        
-        if not data or not data.get("entry"):
-            return "No observations found for this patient."
-        
-        observations = []
-        for entry in data["entry"]:
-            if "resource" in entry:
-                obs = entry["resource"]
-                
-                # Format observation
-                code_display = "Unknown Test"
-                if obs.get("code") and obs["code"].get("coding") and len(obs["code"]["coding"]) > 0:
-                    code_display = obs["code"]["coding"][0].get("display", "Unknown Test")
-                
-                # Format value
-                value = "No value recorded"
-                if obs.get("valueQuantity"):
-                    val = obs["valueQuantity"].get("value", "")
-                    unit = obs["valueQuantity"].get("unit", "")
-                    value = f"{val} {unit}"
-                elif obs.get("valueCodeableConcept"):
-                    if obs["valueCodeableConcept"].get("text"):
-                        value = obs["valueCodeableConcept"]["text"]
-                    elif obs["valueCodeableConcept"].get("coding") and len(obs["valueCodeableConcept"]["coding"]) > 0:
-                        value = obs["valueCodeableConcept"]["coding"][0].get("display", "Unknown")
-                elif obs.get("valueString"):
-                    value = obs["valueString"]
-                
-                # Get date
-                date = obs.get("effectiveDateTime", "Unknown Date")
-                status = obs.get("status", "unknown")
-                
-                observations.append(f"{code_display}: {value} ({date}, {status})")
-        
-        if not observations:
-            return "No valid observations found for this patient."
-        
-        return "\n---\n".join(observations)
+        try:
+            return await mcp.get_observations(patient_id=patient_id, count=15)
+        except Exception as e:
+            print(f"Error with MCP server: {e}, falling back to direct FHIR request")
+            fhir_server = os.environ.get("FHIR_MCP_SERVER_URL", "https://hapi.fhir.org/baseR4")
+            from server import make_fhir_request, format_observation
+            
+            url = f"{fhir_server}/Observation?patient={patient_id}&_count=15&_sort=-date"
+            data = await make_fhir_request(url)
+            
+            if not data or not data.get("entry"):
+                return "No observations found for this patient."
+            
+            observations = []
+            for entry in data["entry"]:
+                if "resource" in entry:
+                    obs = entry["resource"]
+                    observations.append(format_observation(obs))
+            
+            if not observations:
+                return "No valid observations found for this patient."
+            
+            return "\n---\n".join(observations)
     
     async def get_conditions(self, patient_id):
         """Get medical conditions for a patient"""
-        url = f"{self.fhir_server}/Condition?patient={patient_id}&_count=20&_sort=-recorded-date"
-        data = await make_fhir_request(url)
-        
-        if not data or not data.get("entry"):
-            return "No conditions found for this patient."
-        
-        conditions = []
-        for entry in data["entry"]:
-            if "resource" in entry:
-                condition = entry["resource"]
-                
-                # Get the condition name/code
-                name = "Unknown Condition"
-                if condition.get("code") and condition["code"].get("coding") and len(condition["code"]["coding"]) > 0:
-                    name = condition["code"]["coding"][0].get("display", "Unknown Condition")
-                elif condition.get("code") and condition["code"].get("text"):
-                    name = condition["code"]["text"]
-                
-                # Get clinical status
-                status = "unknown"
-                if condition.get("clinicalStatus") and condition["clinicalStatus"].get("coding") and len(condition["clinicalStatus"]["coding"]) > 0:
-                    status = condition["clinicalStatus"]["coding"][0].get("code", "unknown")
-                
-                # Get onset date if available
-                onset = "Unknown onset"
-                if condition.get("onsetDateTime"):
-                    onset = condition["onsetDateTime"]
-                
-                conditions.append(f"{name} (Status: {status}, Onset: {onset})")
-        
-        if not conditions:
-            return "No valid conditions found for this patient."
-        
-        return "\n---\n".join(conditions)
+        try:
+            return await mcp.get_conditions(patient_id=patient_id)
+        except Exception as e:
+            print(f"Error with MCP server: {e}, falling back to direct FHIR request")
+            # Implement direct FHIR request fallback similar to other methods
+            fhir_server = os.environ.get("FHIR_MCP_SERVER_URL", "https://hapi.fhir.org/baseR4")
+            from server import make_fhir_request
+            
+            url = f"{fhir_server}/Condition?patient={patient_id}&_count=20&_sort=-recorded-date"
+            data = await make_fhir_request(url)
+            
+            if not data or not data.get("entry"):
+                return "No conditions found for this patient."
+            
+            conditions = []
+            for entry in data["entry"]:
+                if "resource" in entry:
+                    condition = entry["resource"]
+                    
+                    # Get the condition name/code
+                    name = "Unknown Condition"
+                    if condition.get("code") and condition["code"].get("coding") and len(condition["code"]["coding"]) > 0:
+                        name = condition["code"]["coding"][0].get("display", "Unknown Condition")
+                    elif condition.get("code") and condition["code"].get("text"):
+                        name = condition["code"]["text"]
+                    
+                    # Get clinical status
+                    status = "unknown"
+                    if condition.get("clinicalStatus") and condition["clinicalStatus"].get("coding") and len(condition["clinicalStatus"]["coding"]) > 0:
+                        status = condition["clinicalStatus"]["coding"][0].get("code", "unknown")
+                    
+                    # Get onset date if available
+                    onset = "Unknown onset"
+                    if condition.get("onsetDateTime"):
+                        onset = condition["onsetDateTime"]
+                    
+                    conditions.append(f"{name} (Status: {status}, Onset: {onset})")
+            
+            if not conditions:
+                return "No valid conditions found for this patient."
+            
+            return "\n---\n".join(conditions)
     
     async def get_medications(self, patient_id):
         """Get medications for a patient"""
-        url = f"{self.fhir_server}/MedicationRequest?patient={patient_id}&_count=20&_sort=-authored"
-        data = await make_fhir_request(url)
-        
-        if not data or not data.get("entry"):
-            return "No medications found for this patient."
-        
-        medications = []
-        for entry in data["entry"]:
-            if "resource" in entry:
-                med_request = entry["resource"]
-                
-                # Get medication name
-                med_name = "Unknown Medication"
-                if med_request.get("medicationCodeableConcept"):
-                    if med_request["medicationCodeableConcept"].get("text"):
-                        med_name = med_request["medicationCodeableConcept"]["text"]
-                    elif med_request["medicationCodeableConcept"].get("coding") and len(med_request["medicationCodeableConcept"]["coding"]) > 0:
-                        med_name = med_request["medicationCodeableConcept"]["coding"][0].get("display", "Unknown Medication")
-                
-                # Get dosage instructions
-                dosage = "No dosage information"
-                if med_request.get("dosageInstruction") and len(med_request["dosageInstruction"]) > 0:
-                    dosage_obj = med_request["dosageInstruction"][0]
-                    if dosage_obj.get("text"):
-                        dosage = dosage_obj["text"]
-                
-                # Get status
-                status = med_request.get("status", "unknown")
-                
-                # Get authorized date
-                date = med_request.get("authoredOn", "Unknown date")
-                
-                medications.append(f"{med_name}\nDosage: {dosage}\nStatus: {status}\nAuthorized: {date}")
-        
-        if not medications:
-            return "No valid medications found for this patient."
-        
-        return "\n---\n".join(medications)
+        try:
+            return await mcp.get_medications(patient_id=patient_id)
+        except Exception as e:
+            print(f"Error with MCP server: {e}, falling back to direct FHIR request")
+            # Implement direct FHIR request fallback
+            fhir_server = os.environ.get("FHIR_MCP_SERVER_URL", "https://hapi.fhir.org/baseR4")
+            from server import make_fhir_request
+            
+            url = f"{fhir_server}/MedicationRequest?patient={patient_id}&_count=20&_sort=-authored"
+            data = await make_fhir_request(url)
+            
+            if not data or not data.get("entry"):
+                return "No medications found for this patient."
+            
+            medications = []
+            for entry in data["entry"]:
+                if "resource" in entry:
+                    med_request = entry["resource"]
+                    
+                    # Get medication name
+                    med_name = "Unknown Medication"
+                    if med_request.get("medicationCodeableConcept"):
+                        if med_request["medicationCodeableConcept"].get("text"):
+                            med_name = med_request["medicationCodeableConcept"]["text"]
+                        elif med_request["medicationCodeableConcept"].get("coding") and len(med_request["medicationCodeableConcept"]["coding"]) > 0:
+                            med_name = med_request["medicationCodeableConcept"]["coding"][0].get("display", "Unknown Medication")
+                    
+                    # Get dosage instructions
+                    dosage = "No dosage information"
+                    if med_request.get("dosageInstruction") and len(med_request["dosageInstruction"]) > 0:
+                        dosage_obj = med_request["dosageInstruction"][0]
+                        if dosage_obj.get("text"):
+                            dosage = dosage_obj["text"]
+                    
+                    # Get status
+                    status = med_request.get("status", "unknown")
+                    
+                    # Get authorized date
+                    date = med_request.get("authoredOn", "Unknown date")
+                    
+                    medications.append(f"{med_name}\nDosage: {dosage}\nStatus: {status}\nAuthorized: {date}")
+            
+            if not medications:
+                return "No valid medications found for this patient."
+            
+            return "\n---\n".join(medications)
     
     async def get_allergies(self, patient_id):
         """Get allergies for a patient"""
-        url = f"{self.fhir_server}/AllergyIntolerance?patient={patient_id}&_count=10"
-        data = await make_fhir_request(url)
-        
-        if not data or not data.get("entry"):
-            return "No allergies found for this patient."
-        
-        allergies = []
-        for entry in data["entry"]:
-            if "resource" in entry:
-                allergy = entry["resource"]
-                
-                # Get substance
-                substance = "Unknown allergen"
-                if allergy.get("code") and allergy["code"].get("coding") and len(allergy["code"]["coding"]) > 0:
-                    substance = allergy["code"]["coding"][0].get("display", "Unknown allergen")
-                elif allergy.get("code") and allergy["code"].get("text"):
-                    substance = allergy["code"]["text"]
-                
-                # Get severity and manifestation
-                severity = "Unknown severity"
-                manifestation = "Unknown reaction"
-                
-                if allergy.get("reaction") and len(allergy["reaction"]) > 0:
-                    reaction = allergy["reaction"][0]
-                    severity = reaction.get("severity", "Unknown severity")
+        try:
+            return await mcp.get_allergies(patient_id=patient_id)
+        except Exception as e:
+            print(f"Error with MCP server: {e}, falling back to direct FHIR request")
+            # Implement direct FHIR request fallback
+            fhir_server = os.environ.get("FHIR_MCP_SERVER_URL", "https://hapi.fhir.org/baseR4")
+            from server import make_fhir_request
+            
+            url = f"{fhir_server}/AllergyIntolerance?patient={patient_id}&_count=10"
+            data = await make_fhir_request(url)
+            
+            if not data or not data.get("entry"):
+                return "No allergies found for this patient."
+            
+            allergies = []
+            for entry in data["entry"]:
+                if "resource" in entry:
+                    allergy = entry["resource"]
                     
-                    if reaction.get("manifestation") and len(reaction["manifestation"]) > 0:
-                        man = reaction["manifestation"][0]
-                        if man.get("coding") and len(man["coding"]) > 0:
-                            manifestation = man["coding"][0].get("display", "Unknown reaction")
-                        elif man.get("text"):
-                            manifestation = man["text"]
-                
-                allergies.append(f"Allergen: {substance}\nSeverity: {severity}\nManifestation: {manifestation}")
-        
-        if not allergies:
-            return "No valid allergies found for this patient."
-        
-        return "\n---\n".join(allergies)
+                    # Get substance
+                    substance = "Unknown allergen"
+                    if allergy.get("code") and allergy["code"].get("coding") and len(allergy["code"]["coding"]) > 0:
+                        substance = allergy["code"]["coding"][0].get("display", "Unknown allergen")
+                    elif allergy.get("code") and allergy["code"].get("text"):
+                        substance = allergy["code"]["text"]
+                    
+                    # Get severity and manifestation
+                    severity = "Unknown severity"
+                    manifestation = "Unknown reaction"
+                    
+                    if allergy.get("reaction") and len(allergy["reaction"]) > 0:
+                        reaction = allergy["reaction"][0]
+                        severity = reaction.get("severity", "Unknown severity")
+                        
+                        if reaction.get("manifestation") and len(reaction["manifestation"]) > 0:
+                            man = reaction["manifestation"][0]
+                            if man.get("coding") and len(man["coding"]) > 0:
+                                manifestation = man["coding"][0].get("display", "Unknown reaction")
+                            elif man.get("text"):
+                                manifestation = man["text"]
+                    
+                    allergies.append(f"Allergen: {substance}\nSeverity: {severity}\nManifestation: {manifestation}")
+            
+            if not allergies:
+                return "No valid allergies found for this patient."
+            
+            return "\n---\n".join(allergies)
     
     async def collect_all_medical_data(self, patient_id):
         """Collect all medical data for a patient"""

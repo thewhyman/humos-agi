@@ -28,6 +28,7 @@ HumOS FHIR Health Agent is a healthcare data integration platform built on the M
 - **Structured Data Access**: Retrieve all medical data in an organized dictionary format
 - **Interactive Agent**: Conversational AI agent interface for natural language queries about patient data
 - **Robust Mock Data System**: Built-in realistic mock data for development and testing
+- **Voice Analysis**: Comprehensive testing suite for voice analysis features
 
 ## Architecture
 
@@ -86,6 +87,15 @@ To use with real data, set the environment variable:
 export USE_MOCK_DATA="False"
 ```
 
+## Voice Analysis Testing
+
+The voice analysis testing suite includes comprehensive tests for validating voice analysis features. To run the tests:
+
+```bash
+# Run voice analysis tests
+python -m pytest tests/voice_analysis/
+```
+
 ## Code Structure
 
 ### Key Components
@@ -93,6 +103,7 @@ export USE_MOCK_DATA="False"
 - **server.py**: FastMCP server implementation with FHIR data access methods
 - **fhir_client.py**: Client library for connecting to the FHIR MCP server
 - **agent.py**: uAgent implementation for conversational interface
+- **tests/voice_analysis/**: Test suite for voice analysis features
 
 ## Usage Examples
 
@@ -118,6 +129,7 @@ async def example():
 - This implementation uses the public HAPI FHIR test server by default
 - For production use, configure appropriate authentication mechanisms
 - Ensure proper handling of PHI (Protected Health Information) in compliance with regulations
+- Voice analysis data should be handled with appropriate privacy controls
 
 ## Contributing
 

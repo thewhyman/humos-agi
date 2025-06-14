@@ -1,0 +1,62 @@
+<mat-card class="face-detection-card">
+  <mat-card-header>
+    <div mat-card-avatar class="header-icon">
+      <mat-icon>face_retouching_natural</mat-icon>
+    </div>
+    <mat-card-title>Face Detection</mat-card-title>
+    <mat-card-subtitle>Real-time emotion and face analysis</mat-card-subtitle>
+  </mat-card-header>
+  
+  <mat-card-content>
+    <div class="detection-container">
+      <div class="video-container">
+        <video #videoElement class="video-feed" autoplay playsinline muted></video>
+        <canvas #canvasElement class="detection-canvas"></canvas>
+      </div>
+      
+      <div class="results" *ngIf="detectionResult">
+        <div class="result-item">
+          <span class="result-label">Emotion:</span>
+          <span class="result-value">
+            {{ getEmotionEmoji(detectionResult.expressions) }}
+            {{ getEmotionPercentage(detectionResult.expressions, getDominantEmotion(detectionResult.expressions)).toFixed(1) }}% {{ getDominantEmotion(detectionResult.expressions) }}
+          </span>
+        </div>
+        
+        <div class="result-item" *ngIf="detectionResult.age">
+          <span class="result-label">Age:</span>
+          <span class="result-value">{{ detectionResult.age }} years</span>
+        </div>
+        
+        <div class="result-item" *ngIf="detectionResult.gender">
+          <span class="result-label">Gender:</span>
+          <span class="result-value">
+            {{ detectionResult.gender }} ({{ (detectionResult.genderProbability! * 100).toFixed(1) }}%)
+          </span>
+        </div>
+      </div>
+      
+      <div class="no-face" *ngIf="!detectionResult && isDetecting">
+        <mat-icon>search_off</mat-icon>
+        <p>No face detected</p>
+      </div>
+      
+      <div class="error" *ngIf="error">
+        <mat-icon>error_outline</mat-icon>
+        <p>{{ error }}</p>
+      </div>
+    </div>
+  </mat-card-content>
+  
+  <mat-card-actions align="end">
+    <button 
+      mat-raised-button 
+      color="primary" 
+      (click)="toggleDetection()"
+      [disabled]="!!error"
+    >
+      <mat-icon>{{ isDetecting ? 'stop' : 'play_arrow' }}</mat-icon>
+      {{ isDetecting ? 'Stop Detection' : 'Start Detection' }}
+    </button>
+  </mat-card-actions>
+</mat-card>

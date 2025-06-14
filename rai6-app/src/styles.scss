@@ -1,0 +1,166 @@
+/* You can add global styles to this file, and also import other style files */
+
+/* Import Angular Material prebuilt theme */
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+
+/* Global styles */
+html, body { 
+  height: 100%; 
+  margin: 0;
+  padding: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background-color: #f5f5f5;
+}
+
+/* Utility classes */
+.spacer {
+  flex: 1 1 auto;
+}
+
+/* Sidenav container */
+.sidenav-container {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #f5f5f5;
+}
+
+/* Main content */
+.main-content {
+  padding: 20px;
+  flex: 1;
+  overflow: auto;
+  min-height: calc(100vh - 64px);
+}
+
+/* Toolbar */
+.toolbar-title {
+  margin-left: 16px;
+}
+
+/* Sidenav */
+.sidenav-header {
+  padding: 16px;
+  background-color: #3f51b5;
+  color: white;
+  text-align: center;
+  
+  h1 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 500;
+  }
+  
+  p {
+    margin: 4px 0 0 0;
+    font-size: 14px;
+    opacity: 0.8;
+  }
+}
+
+/* Active nav item */
+.active {
+  background-color: rgba(0, 0, 0, 0.1);
+  font-weight: 500;
+}
+
+/* Sidenav footer */
+.sidenav-footer {
+  padding: 16px;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.6);
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  
+  p {
+    margin: 4px 0;
+  }
+}
+
+/* Global styles */
+html, body { 
+  height: 100%; 
+  margin: 0;
+  padding: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background-color: #f5f5f5;
+}
+
+/* Utility classes */
+.spacer {
+  flex: 1 1 auto;
+}
+
+/* Sidenav container */
+.sidenav-container {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #f5f5f5;
+}
+
+/* Main content */
+.main-content {
+  padding: 20px;
+  flex: 1;
+  overflow: auto;
+  min-height: calc(100vh - 64px);
+}
+
+/* Toolbar */
+.toolbar-title {
+  margin-left: 16px;
+}
+
+/* Sidenav */
+.sidenav-header {
+  padding: 16px;
+  background-color: #3f51b5;
+  color: white;
+  text-align: center;
+  
+  h1 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 500;
+  }
+  
+  p {
+    margin: 4px 0 0;
+    font-size: 14px;
+    opacity: 0.8;
+  }
+}
+
+.sidenav-footer {
+  padding: 16px;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.6);
+  margin-top: auto;
+  
+  p {
+    margin: 4px 0;
+  }
+}
+
+/* Dark theme */
+.dark-theme {
+  background-color: #303030;
+  color: white;
+  
+  .sidenav-header {
+    background-color: #1a237e;
+  }
+  
+  .sidenav-footer {
+    color: rgba(255, 255, 255, 0.7);
+  }
+}

@@ -1,0 +1,114 @@
+<mat-card class="voice-analysis-card">
+  <mat-card-header>
+    <div mat-card-avatar class="header-icon">
+      <mat-icon>record_voice_over</mat-icon>
+    </div>
+    <mat-card-title>Voice Analysis</mat-card-title>
+    <mat-card-subtitle>Analyze speech patterns and emotions</mat-card-subtitle>
+  </mat-card-header>
+  
+  <mat-card-content>
+    <div class="analysis-container">
+      <div class="visualizer-container" #visualizerContainer>
+        <!-- Canvas will be inserted here by the component -->
+      </div>
+      
+      <div class="results" *ngIf="analysisResult">
+        <div class="transcript">
+          <h3>Transcript:</h3>
+          <p>{{ analysisResult.text || 'No speech detected yet...' }}</p>
+        </div>
+        
+        <div class="mood-analysis">
+          <h3>Mood Analysis</h3>
+          <div class="mood-result">
+            <span class="mood-emoji">{{ getMoodEmoji(analysisResult.mood) }}</span>
+            <span class="mood-text">{{ analysisResult.mood | titlecase }}</span>
+            <span class="confidence">
+              ({{ (analysisResult.confidence * 100).toFixed(0) }}% confidence)
+            </span>
+          </div>
+          
+          <mat-progress-bar 
+            [color]="getConfidenceColor(analysisResult.confidence)"
+            [value]="analysisResult.confidence * 100"
+            mode="determinate">
+          </mat-progress-bar>
+          
+          <div class="emotion-bars">
+            <div class="emotion-bar" *ngFor="let emotion of emotions">
+              <span class="emotion-label">{{ emotion | titlecase }}</span>
+              <mat-progress-bar 
+                mode="determinate" 
+                [value]="analysisResult.emotions[emotion] * 100">
+              </mat-progress-bar>
+              <span class="emotion-value">
+                {{ (analysisResult.emotions[emotion] * 100).toFixed(0) }}%
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="tone-analysis">
+          <h3>Voice Tone</h3>
+          <div class="tone-metrics">
+            <div class="tone-metric">
+              <span class="tone-label">Pitch</span>
+              <mat-progress-bar 
+                mode="determinate" 
+                [value]="analysisResult.tone.pitch * 100">
+              </mat-progress-bar>
+              <span class="tone-value">
+                {{ (analysisResult.tone.pitch * 100).toFixed(0) }}
+              </span>
+            </div>
+            
+            <div class="tone-metric">
+              <span class="tone-label">Volume</span>
+              <mat-progress-bar 
+                mode="determinate" 
+                [value]="analysisResult.tone.volume * 100">
+              </mat-progress-bar>
+              <span class="tone-value">
+                {{ (analysisResult.tone.volume * 100).toFixed(0) }}
+              </span>
+            </div>
+            
+            <div class="tone-metric">
+              <span class="tone-label">Rate</span>
+              <mat-progress-bar 
+                mode="determinate" 
+                [value]="analysisResult.tone.rate * 100">
+              </mat-progress-bar>
+              <span class="tone-value">
+                {{ analysisResult.tone.rate.toFixed(1) }}x
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="no-results" *ngIf="!analysisResult && !error">
+        <mat-icon>hearing</mat-icon>
+        <p>Click the button below to start voice analysis</p>
+      </div>
+      
+      <div class="error" *ngIf="error">
+        <mat-icon>error_outline</mat-icon>
+        <p>{{ error }}</p>
+      </div>
+    </div>
+  </mat-card-content>
+  
+  <mat-card-actions align="end">
+    <button 
+      mat-raised-button 
+      [color]="isListening ? 'warn' : 'primary'" 
+      (click)="toggleListening()"
+      [disabled]="!!error"
+    >
+      <mat-icon>{{ isListening ? 'stop' : 'mic' }}</mat-icon>
+      {{ isListening ? 'Stop Analysis' : 'Start Analysis' }}
+    </button>
+  </mat-card-actions>
+</mat-card>
